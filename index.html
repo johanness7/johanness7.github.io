@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <!-- Google AdSense Main Code -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3036128934622320" crossorigin="anonymous"></script>
+    
+    <link rel="icon" type="image/png" sizes="1280x1280" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
+    <meta charset="UTF-8">
+    <title>Das Passwort Spiel | Made by johannes_s7</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg: #f5f5f0; 
+            --card-bg: #ffffff;
+            --text: #2c2c2e;
+            --accent: #d4a373;
+            --error: #e63946;
+            --success: #2a9d8f;
+            --border: #e0e0d5;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Georgia', serif;
+            margin: 0; padding: 0;
+            display: flex; justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* Werbe-Sidebar Styling */
+        .ad-sidebar {
+            width: 160px; 
+            height: 600px;
+            position: fixed; 
+            top: 100px;
+            z-index: 50;
+        }
+        .ad-left { left: 20px; }
+        .ad-right { right: 20px; }
+
+        @media (max-width: 1250px) { .ad-sidebar { display: none; } }
+
+        .main-content {
+            width: 100%; max-width: 700px;
+            padding: 60px 20px 250px 20px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .header h1 { font-size: 3.5rem; font-weight: 400; margin: 0 0 40px 0; letter-spacing: -1px; text-align: center; }
+
+        #password-container {
+            width: 100%; position: sticky; top: 20px;
+            z-index: 100; background: var(--bg); padding-bottom: 30px;
+        }
+
+        .input-group { display: flex; gap: 8px; align-items: stretch; width: 100%; position: relative; }
+
+        .btn-status {
+            position: absolute; top: -25px; font-family: sans-serif;
+            font-size: 11px; font-weight: bold; text-transform: uppercase;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none;
+        }
+        #share-status { left: 5px; color: var(--accent); }
+        #reset-status { left: 63px; color: var(--error); }
+        #save-status { right: 5px; color: var(--success); }
+
+        .action-btn {
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: 4px; width: 50px; cursor: pointer; color: var(--text);
+            font-size: 18px; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.03); flex-shrink: 0;
+        }
+
+        .action-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+        .btn-reset:hover { background: var(--error); border-color: var(--error); }
+
+        .input-wrapper { position: relative; display: flex; align-items: center; flex-grow: 1; }
+
+        #main-input {
+            width: 100%; padding: 18px; padding-right: 65px; font-size: 22px;
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: 4px; color: var(--text); outline: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+
+        #char-counter {
+            position: absolute; right: 15px; font-family: sans-serif; font-size: 14px;
+            color: var(--accent); font-weight: bold; background: #f9f9f7;
+            padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border);
+        }
+
+        /* Reset Modal */
+        #reset-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); z-index: 2000; align-items: center; justify-content: center;
+        }
+        .modal-content { background: var(--card-bg); padding: 30px; border-radius: 8px; text-align: center; max-width: 300px; }
+        .modal-btns { display: flex; gap: 10px; justify-content: center; }
+        .modal-btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: sans-serif; }
+        .confirm-btn { background: var(--error); color: white; }
+        .cancel-btn { background: var(--border); color: var(--text); }
+
+        #rules-container { width: 100%; display: flex; flex-direction: column-reverse; gap: 15px; }
+        .rule-card {
+            background: var(--card-bg); padding: 20px; border-radius: 2px;
+            border: 1px solid var(--border); border-top: 4px solid var(--error);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+        }
+        .rule-card.valid { border-top-color: var(--success); opacity: 0.6; }
+        .rule-num { font-size: 10px; text-transform: uppercase; color: var(--accent); margin-bottom: 5px; display: block; }
+        
+        #status-row { display: flex; justify-content: flex-end; margin-top: 10px; font-size: 11px; text-transform: uppercase; opacity: 0.5; }
+
+        .footer-fixed {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: var(--bg); padding: 10px 0 15px 0;
+            display: flex; flex-direction: column; align-items: center; z-index: 1000;
+        }
+        .made-by { font-family: sans-serif; font-size: 12px; opacity: 0.6; margin-bottom: 8px; }
+        .social-links { width: 100%; max-width: 550px; border-top: 1px solid var(--border); padding-top: 15px; display: flex; justify-content: center; gap: 30px; }
+        .social-links a { color: var(--text); text-decoration: underline; font-family: sans-serif; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+        .legal-links { font-size: 10px; opacity: 0.4; margin-top: 10px; font-family: sans-serif; }
+    </style>
+</head>
+<body>
+
+    <div id="reset-modal">
+        <div class="modal-content">
+            <p style="font-family: sans-serif;">Spiel wirklich zurücksetzen?</p>
+            <div class="modal-btns">
+                <button class="modal-btn confirm-btn" onclick="confirmReset()">Reset</button>
+                <button class="modal-btn cancel-btn" onclick="closeModal()">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ad Units -->
+    <div class="ad-sidebar ad-left">
+        <!-- Display Ad Left -->
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:160px;height:600px"
+             data-ad-client="ca-pub-3036128934622320"
+             data-ad-slot="2391622638"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+
+    <div class="ad-sidebar ad-right">
+        <!-- Display Ad Right -->
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:160px;height:600px"
+             data-ad-client="ca-pub-3036128934622320"
+             data-ad-slot="2391622638"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+
+    <div class="main-content">
+        <div class="header"><h1>The Password Game</h1></div>
+
+        <div id="password-container">
+            <div class="input-group">
+                <span id="share-status" class="btn-status">Copied!</span>
+                <span id="reset-status" class="btn-status">Reset!</span>
+                <span id="save-status" class="btn-status">Saved!</span>
+
+                <button class="action-btn" onclick="shareWebsite()" title="Share Website">
+                    <i class="fa-solid fa-reply fa-flip-horizontal"></i>
+                </button>
+
+                <button class="action-btn btn-reset" onclick="openModal()" title="Reset Game">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+                
+                <div class="input-wrapper">
+                    <input type="text" id="main-input" placeholder="Enter password..." autocomplete="off" spellcheck="false">
+                    <div id="char-counter">0</div>
+                </div>
+
+                <button class="action-btn" onclick="savePassword()" title="Save Locally">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                </button>
+            </div>
+            
+            <div id="status-row">
+                <span>Progress: <span id="progress-text">0</span>%</span>
+            </div>
+        </div>
+
+        <div id="rules-container"></div>
+    </div>
+
+    <div class="footer-fixed">
+        <div class="made-by">made by johannes_s7</div>
+        <div class="social-links">
+            <a href="https://www.tiktok.com/@johannas.s7" target="_blank"><i class="fa-brands fa-tiktok"></i> TikTok</a>
+            <a href="https://www.instagram.com/johannessiebecke" target="_blank"><i class="fa-brands fa-instagram"></i> Instagram</a>
+        </div>
+        <div class="legal-links" style="margin-top: 20px; text-align: center; font-size: 12px; opacity: 0.5;">
+    <a href="privacy.html" style="color:inherit; text-decoration:none;">Privacy & Policy</a>
+</div>
+    </div>
+
+    <script>
+        const input = document.getElementById('main-input');
+        const charCounter = document.getElementById('char-counter');
+        const rulesContainer = document.getElementById('rules-container');
+        const progressText = document.getElementById('progress-text');
+        const resetModal = document.getElementById('reset-modal');
+
+        const gameHour = new Date().getHours().toString();
+
+        const rules = [
+            { desc: "At least 5 characters.", check: v => v.length >= 5 },
+            { desc: "Must include a number.", check: v => /\d/.test(v) },
+            { desc: "Must include an uppercase letter.", check: v => /[A-Z]/.test(v) },
+            { desc: "Must include a special character.", check: v => /[!@#$%^&*(),.?":{}|<>]/.test(v) },
+            { desc: "Must include the current hour of your local time.", check: v => v.includes(gameHour) },
+            { desc: "Must include a color (red, blue, green...).", check: v => ["red", "blue", "yellow", "green", "black", "white", "purple", "pink", "brown", "orange", "beige", "rot", "blau", "gelb", "grün", "schwarz", "weiß", "lila", "rosa", "braun", "orange", "beige"].some(c => v.toLowerCase().includes(c)) },
+            { desc: "Must include a fruit.", check: v => ["apple", "banana", "pear", "kiwi", "mango", "lemon", "peach", "pineapple", "berry", "apfel", "banane", "birne", "zitrone", "pfirsich", "ananas", "beere"].some(f => v.toLowerCase().includes(f)) },
+            { desc: "Must include at least 3 vowels.", check: v => (v.match(/[aeiouäöü]/gi) || []).length >= 3 },
+            { desc: "No spaces allowed.", check: v => v.length > 0 && !/\s/.test(v) },
+            { desc: "Must include an animal.", check: v => ["dog", "cat", "mouse", "lion", "tiger", "bird", "fish", "bear", "horse", "donkey", "sheep", "elephant", "giraffe", "zebra", "snake", "frog", "monkey", "bee", "wolf", "fox", "rabbit", "hedgehog", "cow", "pig", "chicken", "duck", "spider", "shark", "whale", "eagle", "owl", "ant", "dino", "crocodile", "penguin", "turtle", "hamster", "rat", "deer", "hund", "katze", "maus", "löwe", "vogel", "fisch", "bär", "pferd", "esel", "schaf", "elefant", "schlange", "frosch", "affe", "biene", "wolf", "fuchs", "hase", "igel", "kuh", "schwein", "huhn", "ente", "spinne", "hai", "wal", "adler", "eule", "ameise", "krokodil", "pinguin", "schildkröte", "hamster", "ratte", "reh"].some(t => v.toLowerCase().includes(t)) },
+            { desc: "Must include a day of the week.", check: v => ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "montag", "dienstag", "mittwoch", "donnerstag", "freitag", "samstag", "sonntag"].some(d => v.toLowerCase().includes(d)) },
+            { desc: "Two identical letters next to each other.", check: v => /([a-zA-Z])\1/.test(v) },
+            { desc: "Not the word 'password'.", check: v => !v.toLowerCase().includes("password") && !v.toLowerCase().includes("passwort") },
+            { desc: "Must start with an uppercase letter.", check: v => /^[A-Z]/.test(v) },
+            { desc: "Sum of digits must be greater than 10.", check: v => {
+                const nums = v.match(/\d/g);
+                return nums ? nums.reduce((a, b) => a + parseInt(b), 0) > 10 : false;
+            }},
+            { desc: "Must include a month.", check: v => ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december", "januar", "februar", "märz", "mai", "juni", "juli", "oktober", "dezember"].some(m => v.toLowerCase().includes(m)) },
+            { desc: "At least 12 characters long.", check: v => v.length >= 12 },
+            { desc: "Must include one of the four elements (fire, water...).", check: v => ["fire", "water", "earth", "air", "feuer", "wasser", "erde", "luft"].some(e => v.toLowerCase().includes(e)) },
+            { desc: "Must end with a punctuation mark.", check: v => /[.!?]/.test(v.slice(-1)) },
+            { desc: "Must include a hex character (a-f).", check: v => /[a-f]/.test(v) },
+            { desc: "Must include a prime number between 2 and 20.", check: v => ["2", "3", "5", "7", "11", "13", "17", "19"].some(p => v.includes(p)) },
+            { desc: "Must include a Roman numeral.", check: v => /[IVXLCDM]/.test(v) },
+            { desc: "Character count must be even.", check: v => v.length % 2 === 0 },
+            { desc: "Must include a compass direction.", check: v => ["north", "east", "south", "west", "nord", "ost", "süd", "west"].some(h => v.toLowerCase().includes(h)) },
+            { desc: "Must include a metal.", check: v => ["gold", "silver", "iron", "copper", "steel", "lead", "tin", "silber", "eisen", "kupfer", "stahl", "blei", "zinn"].some(m => v.toLowerCase().includes(m)) }
+        ];
+
+        let won = false;
+        window.onload = () => {
+            const saved = localStorage.getItem('userPassword');
+            if (saved) { input.value = saved; }
+            update();
+        };
+
+        function showStatus(id) {
+            const el = document.getElementById(id);
+            el.style.opacity = "1";
+            setTimeout(() => { el.style.opacity = "0"; }, 2000);
+        }
+
+        function update() {
+            const val = input.value;
+            charCounter.innerText = val.length;
+            rulesContainer.innerHTML = '';
+            let passedCount = 0;
+
+            for (let i = 0; i < rules.length; i++) {
+                const isValid = rules[i].check(val);
+                const card = document.createElement('div');
+                card.className = `rule-card ${isValid ? 'valid' : ''}`;
+                card.innerHTML = `<span class="rule-num">Rule ${i + 1}</span><span class="rule-text">${rules[i].desc}</span>`;
+                rulesContainer.appendChild(card);
+                if (isValid) passedCount++; else break;
+            }
+            const prog = Math.round((passedCount / rules.length) * 100);
+            progressText.innerText = prog;
+
+            if (prog === 100 && !won) {
+                confetti({particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                won = true;
+            } else if (prog < 100) { won = false; }
+        }
+
+        function savePassword() {
+            localStorage.setItem('userPassword', input.value);
+            showStatus('save-status');
+        }
+
+        function openModal() { resetModal.style.display = 'flex'; }
+        function closeModal() { resetModal.style.display = 'none'; }
+        function confirmReset() {
+            input.value = "";
+            localStorage.removeItem('userPassword');
+            update();
+            closeModal();
+            showStatus('reset-status');
+        }
+
+        function shareWebsite() {
+            const text = "Check out 'The Password Game' by johannes_s7! 🚀";
+            if (navigator.share) {
+                navigator.share({ title: 'The Password Game', text: text, url: window.location.href });
+            } else {
+                navigator.clipboard.writeText(text + " " + window.location.href);
+                showStatus('share-status');
+            }
+        }
+
+        input.addEventListener('input', update);
+    </script>
+</body>
+</html>
